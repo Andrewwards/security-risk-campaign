@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Corporate Calm -->
+    <!-- Application Structure Plan: A dashboard-style, single-page application with sticky top navigation to allow non-linear exploration of the marketing plan. The structure is thematic (Threat, Strategy, Campaign, Budget/KPIs) rather than mirroring the report's linear format. This design choice makes the complex information more digestible and allows users to quickly access sections of interest. Key interactions include tabbed content for the campaign details, accordions for industry-specific risks, and an interactive chart for the budget, all designed to reduce cognitive load and improve user engagement. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Budget Allocation -> Goal: Compare -> Viz: Donut Chart -> Interaction: Hover tooltips -> Justification: Provides a quick, visual summary of financial distribution. -> Library: Chart.js.
+        - Report Info: Multi-Channel Program -> Goal: Organize -> Viz: Tabbed Interface -> Interaction: Click to switch content -> Justification: Segments the detailed campaign tactics into manageable sections. -> Library: Vanilla JS.
+        - Report Info: Industry Vulnerabilities -> Goal: Organize/Compare -> Viz: Accordion -> Interaction: Click to expand/collapse -> Justification: Prevents a long wall of text, allowing users to focus on relevant industries. -> Library: Vanilla JS.
+        - Report Info: Ethical Simulation Phases -> Goal: Show Process -> Viz: HTML/CSS Timeline -> Interaction: Hover highlights -> Justification: Visually communicates the sequence of the creative campaign core. -> Library: HTML/Tailwind.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f7f4;
+            color: #1a202c;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 450px;
+            max-height: 80vh;
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link.active {
+            color: #0891b2;
+            border-bottom-color: #0891b2;
+        }
+        .nav-link:hover {
+            color: #0891b2;
+        }
+        .tab-button.active {
+            background-color: #0891b2;
+            color: #ffffff;
+        }
+        .accordion-header {
+            transition: background-color 0.3s;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #0891b2;
+            border: 3px solid #f8f7f4;
+        }
+         .timeline-path {
+            position: absolute;
+            left: -21px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #cbd5e1;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header id="header" class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-800">Security Plan</h1>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#overview" class="nav-link text-gray-600 font-medium border-b-2 border-transparent pb-1">Overview</a>
+                <a href="#threat" class="nav-link text-gray-600 font-medium border-b-2 border-transparent pb-1">The Threat</a>
+                <a href="#strategy" class="nav-link text-gray-600 font-medium border-b-2 border-transparent pb-1">The Strategy</a>
+                <a href="#campaign" class="nav-link text-gray-600 font-medium border-b-2 border-transparent pb-1">The Campaign</a>
+                <a href="#budget" class="nav-link text-gray-600 font-medium border-b-2 border-transparent pb-1">Budget & KPIs</a>
+                <a href="landing-page.html" class="px-4 py-2 bg-cyan-600 text-white rounded-lg font-medium hover:bg-cyan-700 transition-colors">View Landing Page</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pt-2 pb-4 space-y-2">
+             <a href="#overview" class="block nav-link text-gray-600 font-medium">Overview</a>
+             <a href="#threat" class="block nav-link text-gray-600 font-medium">The Threat</a>
+             <a href="#strategy" class="block nav-link text-gray-600 font-medium">The Strategy</a>
+             <a href="#campaign" class="block nav-link text-gray-600 font-medium">The Campaign</a>
+             <a href="#budget" class="block nav-link text-gray-600 font-medium">Budget & KPIs</a>
+             <a href="landing-page.html" class="block nav-link text-gray-600 font-medium px-4 py-2 bg-cyan-600 text-white rounded-lg font-medium hover:bg-cyan-700 transition-colors">View Landing Page</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8 md:py-12">
+
+        <section id="overview" class="scroll-mt-20">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4 text-center">Social Engineering Protection Campaign</h2>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto text-center mb-12">
+                This interactive dashboard outlines a highly targeted marketing strategy to generate awareness and leads for platform security solutions. The plan focuses on demonstrating and mitigating the risks of social engineering within defined high-value accounts.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 text-center">
+                <div class="bg-white p-8 rounded-xl shadow-md border border-gray-200">
+                    <div class="text-5xl font-extrabold text-cyan-600 mb-2">Targeted</div>
+                    <h3 class="text-xl font-semibold text-gray-700">Accounts</h3>
+                    <p class="text-gray-500 mt-1">A focused list for hyper-personalised engagement.</p>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-md border border-gray-200">
+                    <div class="text-5xl font-extrabold text-cyan-600 mb-2">$20K</div>
+                    <h3 class="text-xl font-semibold text-gray-700">Total Budget</h3>
+                    <p class="text-gray-500 mt-1">A lean budget requiring maximum ROI on all activities.</p>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-md border border-gray-200">
+                    <div class="text-5xl font-extrabold text-cyan-600 mb-2">Focused</div>
+                    <h3 class="text-xl font-semibold text-gray-700">Core Strategy</h3>
+                    <p class="text-gray-500 mt-1">A targeted marketing approach to align sales and marketing efforts.</p>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-16 border-gray-200">
+
+        <section id="threat" class="scroll-mt-20">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4 text-center">The Evolving Social Engineering Threat</h2>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto text-center mb-12">
+                Social engineering exploits human trust to bypass technical security controls. The rise of AI-powered attacks has made these threats more sophisticated and harder to detect. This section details the common attack vectors and highlights specific vulnerabilities within key Australian industries.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="font-bold text-lg text-cyan-700 mb-2">Phishing & BEC</h3>
+                    <p class="text-gray-600 text-sm">Deceptive emails or messages from seemingly trusted sources to steal credentials or initiate fraudulent transactions. Business Email Compromise (BEC) is a highly damaging variant.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="font-bold text-lg text-cyan-700 mb-2">Baiting</h3>
+                    <p class="text-gray-600 text-sm">Luring victims with tempting offers (e.g., free software, infected USB drives) to install malware or gain system access.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="font-bold text-lg text-cyan-700 mb-2">Pretexting</h3>
+                    <p class="text-600 text-sm">Creating a fabricated scenario or "pretext" to manipulate a target into divulging information or performing an action.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="font-bold text-lg text-cyan-700 mb-2">AI-Powered Attacks</h3>
+                    <p class="text-gray-600 text-sm">Using Artificial Intelligence for voice cloning and deepfakes to create highly convincing impersonations, making detection extremely difficult.</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 md:p-8 rounded-xl shadow-md border border-gray-200 mb-12">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">Impact on Australian Businesses & Economy</h3>
+                <div id="impact-mitigation-container" class="grid grid-cols-1 gap-6">
+                    <!-- Impact and Mitigation items will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <div class="bg-white p-6 md:p-8 rounded-xl shadow-md border border-gray-200">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">Industry-Specific Vulnerabilities in Australia</h3>
+                <div id="accordion-container" class="space-y-4">
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-16 border-gray-200">
+
+        <section id="strategy" class="scroll-mt-20">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4 text-center">The Strategy: Precision & Personalisation</h2>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto text-center mb-12">
+                A targeted marketing strategy is essential to maximise the impact of a limited budget on defined high-value accounts. This approach focuses on quality over quantity, aligning marketing and sales to deliver personalised experiences that resonate with key decision-makers.
+            </p>
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 p-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Ideal Customer Profile (ICP)</h3>
+                    <p class="text-gray-600 mb-6">We will target specific personas within accounts that exhibit key attributes, ensuring our messaging is always relevant.</p>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <span class="text-cyan-500 mr-3 mt-1">➔</span>
+                            <p><strong class="text-gray-700">Industry Focus:</strong> Financial Services, Healthcare, Manufacturing, Retail, and Professional Services.</p>
+                        </div>
+                         <div class="flex items-start">
+                            <span class="text-cyan-500 mr-3 mt-1">➔</span>
+                            <p><strong class="text-gray-700">Target Personas:</strong> CISOs, IT Directors, Security Executives, and key influencers like CFOs and Compliance Officers.</p>
+                        </div>
+                         <div class="flex items-start">
+                            <span class="text-cyan-500 mr-3 mt-1">➔</span>
+                            <p><strong class="text-gray-700">Key Pain Points:</strong> Concerns over data privacy, compliance pressures, and past security incidents.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center justify-center space-y-4">
+                    <div class="text-center p-4 border-2 border-dashed border-cyan-300 rounded-lg bg-cyan-50">
+                        <h4 class="font-bold text-cyan-800">1. Identify & Research</h4>
+                        <p class="text-sm text-cyan-700">Analyse target accounts</p>
+                    </div>
+                    <div class="text-2xl text-cyan-400">↓</div>
+                    <div class="text-center p-4 border-2 border-dashed border-cyan-300 rounded-lg bg-cyan-50">
+                        <h4 class="font-bold text-cyan-800">2. Personalise & Engage</h4>
+                        <p class="text-sm text-cyan-700">Tailor content & outreach</p>
+                    </div>
+                    <div class="text-2xl text-cyan-400">↓</div>
+                     <div class="text-center p-4 border-2 border-dashed border-cyan-300 rounded-lg bg-cyan-50">
+                        <h4 class="font-bold text-cyan-800">3. Nurture & Convert</h4>
+                        <p class="text-sm text-cyan-700">Deliver qualified leads to sales</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-16 border-gray-200">
+
+        <section id="campaign" class="scroll-mt-20">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4 text-center">Multi-Channel Campaign Programme</h2>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto text-center mb-12">
+                This integrated programme uses a mix of content, social media, virtual events, and sales enablement to engage target accounts. The centrepiece is an innovative "Ethical Social Engineering Simulation" designed to demonstrate risk and showcase the value of platform security solutions.
+            </p>
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 p-2 md:p-4">
+                <div class="mb-6 border-b border-gray-200">
+                    <nav id="campaign-tabs" class="flex flex-wrap -mb-px" aria-label="Tabs">
+                    </nav>
+                </div>
+                <div id="campaign-content" class="p-4 md:p-6">
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-16 border-gray-200">
+
+        <section id="budget" class="scroll-mt-20">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4 text-center">Budget & Success Metrics</h2>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto text-center mb-12">
+                A strategic allocation of the $20K budget ensures every dollar is maximised for impact. Success will be measured through a clear set of Key Performance Indicators (KPIs) tracking awareness, lead generation, and pipeline influence.
+            </p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="bg-white p-8 rounded-xl shadow-md border border-gray-200">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">Budget Allocation ($20K)</h3>
+                    <div class="chart-container">
+                        <canvas id="budgetChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-md border border-gray-200">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">Key Performance Indicators (KPIs)</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-gray-50 text-gray-700 uppercase tracking-wider">
+                                <tr>
+                                    <th class="p-3">Category</th>
+                                    <th class="p-3">KPI</th>
+                                    <th class="p-3">Goal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="kpi-table-body" class="divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="container mx-auto px-6 py-4 text-center text-gray-400 text-sm">
+            <p>Interactive Marketing Plan Dashboard | &copy; 2025</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('section');
+            const headerHeight = document.getElementById('header').offsetHeight;
+
+            const observerOptions = {
+                root: null,
+                rootMargin: `-${headerHeight}px 0px 0px 0px`,
+                threshold: 0.4
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        const elementPosition = targetElement.getBoundingClientRect().top;
+                        const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
+                        
+                        window.scrollTo({
+                            top: offsetPosition,
+                            behavior: 'smooth'
+                        });
+
+                        if(mobileMenu.classList.contains('hidden') === false){
+                            mobileMenu.classList.add('hidden');
+                        }
+                    }
+                });
+            });
+
+            const impactMitigationData = [
+                {
+                    impactTitle: "Primary Initial Attack Vector",
+                    impactDescription: "Social engineering is the leading initial attack vector, accounting for **41% of all cyber incidents** [1].",
+                    mitigationPoints: [
+                        "Multi-Factor Authentication (MFA): Essential defence against phishing and unauthorised access.",
+                        "Principle of Least Privilege: Limits impact of compromised accounts.",
+                        "Threat Detection & Event Monitoring: Proactive alerts for suspicious activities."
+                    ]
+                },
+                {
+                    impactTitle: "Significant Financial Losses",
+                    impactDescription: "Australian businesses face substantial financial impacts from cybercrime. In 2023, the average cost of a data breach in Australia was **AUD $4.05 million** [12].",
+                    mitigationPoints: [
+                        "Transaction Security Policies: Automatically blocks suspicious financial transactions.",
+                        "Data Classification & Encryption: Protects sensitive data from exfiltration.",
+                        "Event Monitoring: Provides visibility into data access and changes."
+                    ]
+                },
+                {
+                    impactTitle: "Ransomware Dominance",
+                    impactDescription: "Ransomware, often initiated through social engineering, remains the most prevalent cybercrime threat in Australia, with **80% of reported incidents** involving ransomware or extortion [8].",
+                    mitigationPoints: [
+                        "MFA: Prevents credential stuffing and unauthorised access.",
+                        "Threat Detection: Identifies ransomware-related activities and anomalies.",
+                        "Event Monitoring: Tracks unusual login patterns and data access."
+                    ]
+                },
+                {
+                    impactTitle: "Human Error as a Key Factor",
+                    impactDescription: "Human error, frequently exploited by social engineering, is a leading cause of data loss and breaches, particularly in sectors like healthcare [8, 9].",
+                    mitigationPoints: [
+                        "MFA: Strong defence against compromised user accounts.",
+                        "Login Ranges & Trusted IPs: Restricts access from untrusted locations.",
+                        "Principle of Least Privilege: Reduces exposure from accidental over-privileging.",
+                        "Ethical Simulation Campaign: Educates users on identifying and reporting threats."
+                    ]
+                },
+                {
+                    impactTitle: "Escalating AI-Driven Threats",
+                    impactDescription: "The use of AI for voice cloning and deepfakes in social engineering is increasing, making attacks more sophisticated and harder to detect, leading to new forms of financial fraud [3, 5].",
+                    mitigationPoints: [
+                        "Threat Detection: Identifies AI-driven anomalies like session hijacking.",
+                        "Event Monitoring: Provides audit trails for unusual behaviour.",
+                        "Transaction Security Policies: Protects against AI-induced fraudulent transactions."
+                    ]
+                }
+            ];
+
+            const impactMitigationContainer = document.getElementById('impact-mitigation-container');
+            impactMitigationData.forEach(item => {
+                const impactBlock = document.createElement('div');
+                impactBlock.className = 'bg-white p-6 rounded-xl shadow-md border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4';
+                impactBlock.innerHTML = `
+                    <div>
+                        <h4 class="font-semibold text-gray-700 mb-2">${item.impactTitle}</h4>
+                        <p class="text-gray-600 text-sm">${item.impactDescription}</p>
+                    </div>
+                    <div class="bg-cyan-50 p-4 rounded-lg border border-cyan-200">
+                        <h4 class="font-semibold text-cyan-800 mb-2">Mitigation with Platform Security</h4>
+                        <ul class="list-disc pl-5 text-cyan-700 text-sm space-y-1">
+                            ${item.mitigationPoints.map(point => `<li>${point}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+                impactMitigationContainer.appendChild(impactBlock);
+            });
+
+            const industryData = [
+                {
+                    title: "Financial Services",
+                    content: `Firms face legal action for inadequate cybersecurity controls. High risk of CEO/CFO fraud via urgent transaction requests, with AI voice cloning emerging as a new threat vector. Other risks include:
+                    <ul>
+                        <li>Insider threats (manipulated employees)</li>
+                        <li>Compliance with APRA CPS 234 and data integrity</li>
+                        <li>Phishing targeting customer financial data</li>
+                        <li>Vishing (voice phishing) targeting high-value transactions</li>
+                        <li>Supply chain attacks via third-party financial tech providers</li>
+                    </ul>`
+                },
+                {
+                    title: "Healthcare",
+                    content: `Australia's most targeted non-government sector for ransomware and phishing. Human error is a leading cause of data breaches, compounded by legacy systems and high penalties for non-compliance. Other risks include:
+                    <ul>
+                        <li>Ransomware targeting patient records</li>
+                        <li>Phishing for medical credentials</li>
+                        <li>Data breaches due to compromised staff accounts</li>
+                        <li>Manipulation of staff for access to sensitive patient information</li>
+                        <li>Compliance with Australian Privacy Principles (APPs) and My Health Record</li>
+                    </ul>`
+                },
+                {
+                    title: "Manufacturing",
+                    content: `Exposed to threats targeting Industrial Control Systems (ICS). Vulnerabilities often stem from outdated operational technology (OT) and third-party supply chain risks, including deepfake scams. Other risks include:
+                    <ul>
+                        <li>IP theft via manipulated employees</li>
+                        <li>Supply chain disruption through social engineering</li>
+                        <li>Phishing targeting operational technology (OT) access</li>
+                        <li>Espionage attempts via manipulated R&D staff</li>
+                        <li>Compromise of IoT devices through social engineering</li>
+                    </ul>`
+                },
+                {
+                    title: "Retail",
+                    content: `Growing threats via IT systems and email. Social engineering has led to widespread operational disruption and customer data theft. The rise of eCommerce has expanded the attack surface. Other risks include:
+                    <ul>
+                        <li>Gift card fraud via manipulated customer service</li>
+                        <li>Phishing targeting POS systems credentials</li>
+                        <li>Employee manipulation for inventory or discount fraud</li>
+                        <li>Customer data theft via compromised loyalty programmes</li>
+                        <li>Supply chain attacks impacting product delivery</li>
+                    </ul>`
+                },
+                {
+                    title: "Professional Services",
+                    content: `Highly vulnerable to phishing, impersonation, and Business Email Compromise (BEC). These attacks risk data breaches, IP theft, reputational damage, and significant financial loss. Other risks include:
+                    <ul>
+                        <li>Client data breaches via manipulated consultants</li>
+                        <li>Impersonation of senior partners for financial fraud</li>
+                        <li>Phishing for legal/consulting case details</li>
+                        <li>Manipulation of administrative staff for access</li>
+                        <li>Compromise of sensitive client communications</li>
+                    </ul>`
+                }
+            ];
+
+            const accordionContainer = document.getElementById('accordion-container');
+            industryData.forEach((item, index) => {
+                const accordionItem = document.createElement('div');
+                accordionItem.className = 'border border-gray-200 rounded-lg';
+                accordionItem.innerHTML = `
+                    <button class="accordion-header w-full flex justify-between items-center p-4 text-left font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none">
+                        <span>${item.title}</span>
+                        <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content bg-gray-50">
+                        <p class="p-4 text-gray-600">${item.content}</p>
+                    </div>
+                `;
+                accordionContainer.appendChild(accordionItem);
+            });
+
+            document.querySelectorAll('.accordion-header').forEach(button => {
+                button.addEventListener('click', () => {
+                    const content = button.nextElementSibling;
+                    const icon = button.querySelector('svg');
+
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        document.querySelectorAll('.accordion-content').forEach(c => c.style.maxHeight = null);
+                        document.querySelectorAll('.accordion-header svg').forEach(i => i.style.transform = 'rotate(0deg)');
+                        content.style.maxHeight = content.scrollHeight + "px";
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+
+            const campaignData = {
+                'Content Strategy': {
+                    icon: '📝',
+                    content: `
+                        <h4 class="text-xl font-bold text-gray-800 mb-4">Educate First, Sell Second</h4>
+                        <p class="text-gray-600 mb-6">The content strategy focuses on providing value and building trust. We will audit and repurpose existing assets using AI tools to maximise reach and minimise cost. New content will be created to fill specific gaps, such as industry-specific threat reports and compelling case studies.</p>
+                        <ul class="space-y-3 text-gray-600">
+                            <li class="flex items-start"><span class="bg-cyan-100 text-cyan-800 text-xs font-semibold mr-3 px-2.5 py-0.5 rounded-full mt-1">Key Tactic</span>Repurpose existing webinars into short video clips, blog posts, and email snippets.</li>
+                            <li class="flex items-start"><span class="bg-cyan-100 text-cyan-800 text-xs font-semibold mr-3 px-2.5 py-0.5 rounded-full mt-1">Key Tactic</span>Develop targeted case studies showing tangible results for similar companies.</li>
+                            <li class="flex items-start"><span class="bg-cyan-100 text-cyan-800 text-xs font-semibold mr-3 px-2.5 py-0.5 rounded-full mt-1">Key Tactic</span>Gate high-value content (whitepapers, full webinars) to capture leads.</li>
+                        </ul>`
+                },
+                'Social & Paid': {
+                    icon: '📢',
+                    content: `
+                        <h4 class="text-xl font-bold text-gray-800 mb-4">Targeted LinkedIn Engagement</h4>
+                        <p class="text-gray-600 mb-6">LinkedIn will be our primary channel for both organic and paid promotion. The focus is on precision targeting to ensure every dollar of the ad spend reaches key decision-makers within high-value accounts.</p>
+                        <ul class="space-y-3 text-gray-600">
+                            <li class="flex items-start"><span class="bg-cyan-100 text-cyan-800 text-xs font-semibold mr-3 px-2.5 py-0.5 rounded-full mt-1">Key Tactic</span>Use LinkedIn Sales Navigator for hyper-targeted InMail outreach by the sales team.</li>
+                            <li class="flex items-start"><span class="bg-cyan-100 text-cyan-800 text-xs font-semibold mr-3 px-2.5 py-0.5 rounded-full mt-1">Key Tactic</span>Run focused LinkedIn Ad campaigns exclusively targeting high-value accounts and specific job titles (CISOs, IT Directors).</li>
+                            <li class="flex items-start"><span class="bg-cyan-100 text-cyan-800 text-xs font-semibold mr-3 px-2.5 py-0.5 rounded-full mt-1">Key Tactic</span>Encourage employee advocacy to amplify reach and build trust through personal profiles.</li>
+                        </ul>`
+                },
+                'Webinar': {
+                    icon: '💻',
+                    content: `
+                        <h4 class="text-xl font-bold text-gray-800 mb-4">High-Impact Virtual Events</h4>
+                        <p class="text-gray-600 mb-6">We will host 1-2 high-value webinars focused on education, not sales pitches. These events are a cost-effective way to generate high-quality leads and serve as a cornerstone for content repurposing.</p>
+                        <ul class="space-y-3 text-gray-600">
+                            <li class="flex items-start"><span class="bg-cyan-100 text-cyan-800 text-xs font-semibold mr-3 px-2.5 py-0.5 rounded-full mt-1">Key Tactic</span>Host an educational webinar with an industry expert or ethical hacker.</li>
+                            <li class="flex items-start"><span class="bg-cyan-100 text-cyan-800 text-xs font-semibold mr-3 px-2.5 py-0.5 rounded-full mt-1">Key Tactic</span>Incorporate interactive elements like live Q&A and polls to boost engagement.</li>
+                            <li class="flex items-start"><span class="bg-cyan-100 text-cyan-800 text-xs font-semibold mr-3 px-2.5 py-0.5 rounded-full mt-1">Key Tactic</span>Record and repurpose the full webinar into multiple smaller content assets.</li>
+                        </ul>`
+                },
+                'Ethical Simulation': {
+                    icon: '🛡️',
+                    content: `
+                        <h4 class="text-xl font-bold text-gray-800 mb-4">The Unseen Threat: A Security Challenge</h4>
+                        <p class="text-gray-600 mb-6">The creative core of the campaign is an ethical simulation that demonstrates social engineering risks in a controlled, educational environment. This "show, don't tell" approach is designed to be memorable and create urgency.</p>
+                        <div class="relative pl-8">
+                            <div class="timeline-path"></div>
+                            <div class="timeline-item relative mb-8">
+                                <h5 class="font-bold text-lg text-gray-700">Phase 1: Awareness & Intrigue</h5>
+                                <p class="text-gray-600 text-sm">Disseminate video teasers of simulated attacks via LinkedIn and email to high-value accounts, posing the question: "Could this happen to you?"</p>
+                            </div>
+                            <div class="timeline-item relative mb-8">
+                                <h5 class="font-bold text-lg text-gray-700">Phase 2: Ethical Simulation & Education</h5>
+                                <p class="text-gray-600 text-sm">Host a live webinar demonstrating a simulated attack on a platform environment, followed immediately by showcasing how platform security features would prevent or detect it.</p>
+                            </div>
+                            <div class="timeline-item relative">
+                                <h5 class="font-bold text-lg text-gray-700">Phase 3: Follow-up & Nurture</h5>
+                                <p class="text-gray-600 text-sm">Sales team follows up with attendees, offering a personalised "Security Posture Review" and sharing a detailed defence checklist.</p>
+                            </div>
+                        </div>`
+                },
+                'Marketing Deliverables': {
+                    icon: '📦',
+                    content: `
+                        <h4 class="text-xl font-bold text-gray-800 mb-4">Key Marketing Outputs</h4>
+                        <p class="text-gray-600 mb-6">This section outlines the tangible marketing assets and outputs that will be produced as part of the campaign, ensuring a clear understanding of the deliverables generated from the budget and team efforts.</p>
+                        <ul class="list-disc pl-5 text-gray-600 space-y-2">
+                            <li>**Repurposed Content Pieces:**
+                                <ul class="list-circle pl-5 text-gray-600 space-y-1 mt-1">
+                                    <li>4-5 Short Video Clips (from webinar recordings for social media)</li>
+                                    <li>2-3 Blog Posts (derived from webinar transcripts/existing content)</li>
+                                    <li>Email Snippets/Series (from long-form content)</li>
+                                    <li>1-2 Infographics (summarising key threats/solutions)</li>
+                                </ul>
+                            </li>
+                            <li>**Targeted Written Content:**
+                                <ul class="list-circle pl-5 text-gray-600 space-y-1 mt-1">
+                                    <li>1-2 Industry-Specific Threat Reports/Guides (gated content)</li>
+                                    <li>2-3 Customer Case Studies (highlighting successful risk mitigation)</li>
+                                </ul>
+                            </li>
+                            <li>**Campaign Specific Assets:**
+                                <ul class="list-circle pl-5 text-gray-600 space-y-1 mt-1">
+                                    <li>Ethical Simulation Video Teasers (for Phase 1 intrigue)</li>
+                                    <li>Ethical Simulation Webinar Recording (full version, gated)</li>
+                                    <li>"Security Posture Review" Template/Framework (for sales enablement)</li>
+                                    <li>"Social Engineering Defence Checklist" (gated content)</li>
+                                </ul>
+                            </li>
+                            <li>**Digital Campaign Elements:**
+                                <ul class="list-circle pl-5 text-gray-600 space-y-1 mt-1">
+                                    <li>Targeted LinkedIn Ad Creatives & Copy</li>
+                                    <li>Personalised Email Templates (for sales outreach & nurturing)</li>
+                                    <li>Dedicated Campaign Landing Page (for lead capture)</li>
+                                </ul>
+                            </li>
+                            <li>**Sales Enablement Tools:**
+                                <ul class="list-circle pl-5 text-gray-600 space-y-1 mt-1">
+                                    <li>Sales Playbook/Messaging Frameworks</li>
+                                    <li>Quick Reference Guides on Social Engineering Threats</li>
+                                </ul>
+                            </li>
+                        </ul>`
+                },
+                'Target Industries': {
+                    icon: '🎯',
+                    content: `
+                        <h4 class="text-xl font-bold text-gray-800 mb-4">Prioritised Industry Focus for Campaign Efforts</h4>
+                        <p class="text-gray-600 mb-6">Targeting these industries will deliver optimum results, representing the highest concentration of potential clients and will be prioritised for tailored marketing and sales engagement.</p>
+                        <ul class="list-disc pl-5 text-gray-600 space-y-2">
+                            <li>💼 **Professional Services:** High concentration of consulting firms, legal practices, and service-based businesses. Vulnerable due to client data and intellectual property.</li>
+                            <li>⚙️ **Manufacturing / Industrial / Mining:** Companies in production, heavy industry, and resource extraction. Vulnerable due to complex supply chains and operational technology.</li>
+                            <li>🛍️ **Retail / Consumer Goods:** Businesses with large volumes of customer data and distributed workforces, increasing attack surface.</li>
+                            <li>⚕️ **Healthcare / Pharma / Medical:** Frequent targets due to sensitive patient data and reliance on mixed legacy/modern systems.</li>
+                            <li>🏨 **Hospitality / Leisure:** Handle significant customer payment and personal information, making them attractive targets.</li>
+                        </ul>
+                        <p class="text-gray-600 mt-6 text-sm">Focusing on these industries allows for deeper specialisation in messaging and more efficient allocation of campaign resources.</p>`
+                }
+            };
+
+            const campaignTabs = document.getElementById('campaign-tabs');
+            const campaignContent = document.getElementById('campaign-content');
+
+            Object.keys(campaignData).forEach((tabName, index) => {
+                const button = document.createElement('button');
+                button.className = `tab-button text-sm font-medium text-center px-4 py-3 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 focus:outline-none`;
+                button.innerHTML = `<span class="mr-2">${campaignData[tabName].icon}</span>${tabName}`;
+                button.dataset.target = tabName;
+
+                // Set 'Content Strategy' as active by default, or 'Marketing Deliverables' if it's the first tab.
+                if (index === 0) { // Keep the first tab active by default
+                    button.classList.add('active');
+                    campaignContent.innerHTML = campaignData[tabName].content;
+                }
+
+                campaignTabs.appendChild(button);
+            });
+
+            campaignTabs.addEventListener('click', (e) => {
+                const targetButton = e.target.closest('.tab-button');
+                if (!targetButton) return;
+
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                targetButton.classList.add('active');
+
+                const targetContent = targetButton.dataset.target;
+                campaignContent.innerHTML = campaignData[targetContent].content;
+            });
+
+            const budgetData = {
+                labels: ['Paid Social (LinkedIn)', 'Content Creation', 'Sales & Marketing Tools', 'Webinar & Events', 'Email Marketing', 'Contingency'],
+                datasets: [{
+                    label: 'Budget Allocation',
+                    data: [6000, 3500, 1500, 1800, 500, 5000],
+                    backgroundColor: [
+                        '#06b6d4', // cyan-500
+                        '#67e8f9', // cyan-300
+                        '#22d3ee', // cyan-400
+                        '#a5f3fc', // cyan-200
+                        '#cffafe', // cyan-100
+                        '#6b7280'  // gray-500
+                    ],
+                    borderColor: '#f8f7f4',
+                    borderWidth: 4,
+                    hoverOffset: 8
+                }]
+            };
+
+            const budgetCtx = document.getElementById('budgetChart').getContext('2d');
+            new Chart(budgetCtx, {
+                type: 'doughnut',
+                data: budgetData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(context.parsed);
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                    cutout: '60%'
+                }
+            });
+
+            const kpiData = [
+                { category: 'Awareness', kpi: 'LinkedIn Engagement Rate', goal: 'Increase by 25%' },
+                { category: 'Awareness', kpi: 'Webinar Attendance Rate', goal: '> 40% of registrants' },
+                { category: 'Lead Gen', kpi: 'Marketing Qualified Leads (MQLs)', goal: '50 from high-value accounts' },
+                { category: 'Lead Gen', kpi: 'Sales Qualified Leads (SQLs)', goal: '15 from MQLs' },
+                { category: 'Pipeline', kpi: 'Pipeline Value Influenced', goal: '$250,000' },
+                { category: 'Efficiency', kpi: 'Cost Per MQL', goal: '< $400' }
+            ];
+
+            const kpiTableBody = document.getElementById('kpi-table-body');
+            kpiData.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="p-3"><span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full">${item.category}</span></td>
+                    <td class="p-3 font-medium text-gray-900">${item.kpi}</td>
+                    <td class="p-3 text-gray-600">${item.goal}</td>
+                `;
+                kpiTableBody.appendChild(row);
+            });
+        });
+    </script>
+</body>
+</html>
